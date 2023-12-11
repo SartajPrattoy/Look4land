@@ -19,9 +19,9 @@ class DatabaseSeeder extends Seeder
             LocationSeeder::class,
             OptionValueSeeder::class,
         ]);
-        \App\Models\Estate::factory()->count(100)->create();
+        \App\Models\Estate::factory()->count(5)->create();
 
-        \App\Models\UserAgent::factory()->count(20)->create();
-        \App\Models\Visitor::factory()->count(100)->create();
+        \App\Models\UserAgent::factory()->count(2)->create();
+        \App\Models\Visitor::factory()->count(2)->create();
     }
 }

@@ -13,13 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('categories', function (Blueprint $table) {
+        Schema::create('visitors', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->nullable();
-            $table->string('name_en');
-            $table->string('name_ru')->nullable();
-            $table->string('slug')->index();
-            $table->unsignedInteger('sort_order')->default(1);
+            $table->unsignedBigInteger('user_agent_id')->index();
+            $table->foreign('user_agent_id')->references('id')->on('user_agents')->cascadeOnDelete();
+            $table->ipAddress('ip_address');
+            $table->unsignedInteger('requests')->default(0);
+            $table->timestamps();
         });
     }
 
@@ -30,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('categories');
+        Schema::dropIfExists('visitors');
     }
 };
