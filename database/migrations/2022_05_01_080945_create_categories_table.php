@@ -16,8 +16,8 @@ return new class extends Migration
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
             $table->string('name')->nullable();
-            // $table->string('name_en');
-            // // $table->string('name_ru')->nullable();
+            $table->string('name_en');
+            $table->string('name_ru')->nullable();
             $table->string('slug')->index();
             $table->unsignedInteger('sort_order')->default(1);
         });
