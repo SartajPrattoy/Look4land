@@ -141,5 +141,189 @@ class EstateController extends Controller
         ]);
     }
 
+    public function show(Estate $estate)
+    {
+        return view('Admin.estates.show', $estate->with('location', 'category', 'comment'));
+    }
+
+    public function edit($slug)
+    {
+        $estate = Estate::where('slug', $slug)
+            ->with(['values:id'])
+            ->firstOrFail();
+        $categories = Category::orderBy('sort_order')
+            ->orderBy('slug')
+            ->get();
+        $locations = Location::orderBy('sort_order')
+            ->orderBy('slug')
+            ->get();
+        $options = Option::with(['values'])
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        return view('Admin.estates.edit', [
+            'estate' => $estate,
+            'categories' => $categories,
+            'locations' => $locations,
+            'options' => $options,
+        ]);
+    }
+
+    public function update(Request $request, $slug)
+    {
+        $estate = Estate::where('slug', $slug)
+            ->firstOrFail();
+        $request->validate([
+            'category_id' => 'required|integer|min:1',
+            'location_id' => 'required|integer|min:1',
+            'values_id' => 'required|array',
+            'values_id.*' => 'required|integer|min:1|distinct',
+            'name' => 'required|string|max:40',
+            'price' => 'required|integer|min:1|max:99999999999',
+            'phone' => 'required|integer|min:61000000|max:65999999',
+            'slug' => 'required|string|max:40',
+            'description' => 'nullable|string|max:2550',
+            't' => 'nullable|boolean', // credit => t
+            's' => 'nullable|boolean', // swap => s
+            'y' => 'nullable|boolean', // yard => y
+            'a' => 'nullable|boolean', // balcony => a
+            'i' => 'nullable|boolean', // lift => i
+            'image' => 'nullable|image|mimes:jpg,png,jpeg',
+        ]);
+
+        // name
+        $category = Category::findOrFail($request->category_id);
+        $location = Location::findOrFail($request->location_id);
+
+        // estate
+        $estate->category_id = $category->id;
+        $estate->location_id = $location->id;
+        $estate->name = $request->name;
+        $estate->slug = $request->slug;
+        $estate->price = $request->price;
+        $estate->phone = $request->phone;
+        $estate->description = $request->description ?: null;
+        $estate->credit = $request->t ?: null;
+        $estate->swap = $request->s ?: null;
+        $estate->yard = $request->y ?: null;
+        $estate->balcony = $request->a ?: null;
+        $estate->lift = $request->i ?: null;
+        $estate->update();
+
+
+        $estate->values()->sync($request->values_id);
+
+        // image
+        if ($request->has('image')) {
+            if ($estate->image) {
+                Storage::delete($estate->image);
+            }
+            $newImage = $request->file('image');
+            $newImageName = Str::random(10) . '-' . $estate->id . '.' . $newImage->getClientOriginalExtension();
+            Storage::putFileAs('public/estates/', $newImage, $newImageName);
+//            $newImage->storeAs('public/estates/', $newImageName);
+
+            $estate->image = $newImageName;
+            $estate->update();
+        }
+
+        $success = trans('app.store-response', ['name' => $estate->name]);
+        return redirect()->route('admin.estates.index', $estate->slug)
+            ->with([
+                'success' => $success,
+            ]);
+    }
+
+    public function create()
+    {
+        $categories = Category::orderBy('sort_order')
+            ->orderBy('slug')
+            ->get();
+        $locations = Location::orderBy('sort_order')
+            ->orderBy('slug')
+            ->get();
+        $options = Option::with(['values'])
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        return view('Admin.estates.create', [
+            'categories' => $categories,
+            'locations' => $locations,
+            'options' => $options,
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'category_id' => 'required|integer|min:1',
+            'location_id' => 'required|integer|min:1',
+            'values_id' => 'required|array',
+            'values_id.*' => 'required|integer|min:1|distinct',
+            'name' => 'required|string|max:40',
+            'price' => 'required|integer|min:1|max:99999999999',
+            'phone' => 'required|integer|min:61000000|max:65999999',
+            'slug' => 'required|string|max:40',
+            'description' => 'nullable|string|max:2550',
+            't' => 'nullable|boolean', // credit => t
+            's' => 'nullable|boolean', // swap => s
+            'y' => 'nullable|boolean', // yard => y
+            'a' => 'nullable|boolean', // balcony => a
+            'i' => 'nullable|boolean', // lift => i
+            'image' => 'nullable|image|mimes:jpg,png',
+        ]);
+
+        // name
+        $category = Category::findOrFail($request->category_id);
+        $location = Location::findOrFail($request->location_id);
+
+        // estate
+        $estate = new Estate();
+        $estate->category_id = $category->id;
+        $estate->location_id = $location->id;
+        $estate->name = $request->name;
+        $estate->slug = $request->slug;
+        $estate->price = $request->price;
+        $estate->phone = $request->phone;
+        $estate->description = $request->description ?: null;
+        $estate->credit = $request->t ?: null;
+        $estate->swap = $request->s ?: null;
+        $estate->yard = $request->y ?: null;
+        $estate->balcony = $request->a ?: null;
+        $estate->lift = $request->i ?: null;
+        $estate->save();
+
+        $estate->values()->sync($request->values_id);
+
+// image
+            $newImage = $request->file('image');
+            $newImageName = Str::random(10) . '-' . $estate->id . '.' . $newImage->getClientOriginalExtension();
+            Storage::putFileAs('public/estates/', $newImage, $newImageName);
+//            $newImage->storeAs('public/estates/', $newImageName);
+
+            $estate->image = $newImageName;
+            $estate->save();
+
+        $success = trans('app.store-response', ['name' => $estate->name]);
+        return redirect()->route('admin.estates.index', $estate->slug)
+            ->with([
+                'success' => $success,
+            ]);
+    }
+
+    public function delete($slug)
+    {
+        $estate = Estate::where('slug', $slug)
+            ->firstOrFail();
+        $success = trans('app.delete-response', ['name' => $estate->name]);
+        $estate->delete();
+
+        return redirect()->route('admin.estates.index')
+            ->with([
+                'success' => $success,
+            ]);
+    }
 }
 
