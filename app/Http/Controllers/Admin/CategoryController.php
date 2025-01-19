@@ -59,4 +59,96 @@ class CategoryController extends Controller
         ]);
     }
 
+    public function create(Request $slug)
+    {
+        $category = Category::where('slug', $slug)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->first();
+
+        return view('admin.categories.create', [
+            'category' => $category
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name'=>'required|string|max:32',
+            // 'name_en'=>'required|string|max:32',
+            // 'name_ru'=>'required|string|max:32',
+            'slug'=>'required|string|max:32',
+            'sort_order'=>'required|string|max:5',
+        ]);
+
+        // category
+        $category = new Category();
+        $category->name = $request->name;
+        // $category->name_en = $request->name_en;
+        // $category->name_ru = $request->name_ru;
+        $category->slug = $request->slug;
+        $category->sort_order = $request->sort_order;
+        $category->save();
+
+
+        $success = trans('app.store-response', ['name' => $category->name]);
+        return redirect()->route('admin.categories.index', $category->slug)
+            ->with([
+                'success' => $success,
+            ]);
+    }
+
+    public function edit($slug)
+    {
+        $category = Category::where('slug', $slug)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            // ->get();
+            ->first();//get() edip sonunda goysan diymek sana list geler, onam foreach bilen cagyrmaly. A sen barde birja element cagyryan diymek listyn icinde birja element bar, sonra sen blade-da goni listyn adyny sorayan, aslynda listyn yekeje elemendynyn adyny soramaly. onun ucin goni get() derek first() ullanyan. first() sheyle diymek bolyar list[0]. sana goni listyn icindaki element gelyar senem onnon goni shol elemendyn adyny cagyrayyan.
+
+        return view('admin.categories.edit', [
+            'category' => $category
+        ]);
+    }
+
+    public function update(Request $request, $slug)
+    {
+        $category = Category::where('slug', $slug)
+            ->firstOrFail();
+        $request->validate([
+            'name'=>'required|string|max:32',
+            // 'name_en'=>'required|string|max:32',
+            // 'name_ru'=>'required|string|max:32',
+            'slug'=>'required|string|max:32',
+            'sort_order'=>'required|string|max:5',
+        ]);
+
+        // category
+        $category->name = $request->name;
+        // $category->name_en = $request->name_en;
+        // $category->name_ru = $request->name_ru;
+        $category->slug = $request->slug;
+        $category->sort_order = $request->sort_order;
+        $category->update();
+
+
+        $success = trans('app.store-response', ['name' => $category->name]);
+        return redirect()->route('admin.categories.index', $category->slug)
+            ->with([
+                'success' => $success,
+            ]);
+    }
+
+    public function delete($slug)
+    {
+        $category = Category::where('slug', $slug)
+            ->firstOrFail();
+        $success = trans('app.delete-response', ['name' => $category->name]);
+        $category->delete();
+
+        return redirect()->route('admin.categories.index')
+            ->with([
+                'success' => $success,
+            ]);
+    }
 }
