@@ -67,7 +67,11 @@ Route::middleware('auth')->prefix('admin')->name('admin.')
                 Route::get('/index', 'index')->name('index');
             });
 
-
+        Route::controller(MessageController::class)->prefix('messages')->name('messages.')
+            ->group(function () {
+                Route::get('/index', 'index')->name('index');
+                Route::delete('/{id}/delete', 'delete')->name('delete')->where('id', '[0-9]+');
+        });
 
         Route::controller(VisitorController::class)->prefix('visitors')->name('visitors.')
             ->group(function () {
