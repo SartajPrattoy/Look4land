@@ -55,7 +55,11 @@ Route::middleware('auth')->prefix('admin')->name('admin.')
         Route::controller(LocationController::class)->prefix('locations')->name('locations.')
             ->group(function () {
                 Route::get('/index', 'index')->name('index');
-
+                Route::get('/create', 'create')->name('create');
+                Route::post('/store', 'store')->name('store');
+                Route::get('/{slug}/edit', 'edit')->name('edit')->where('slug', '[0-9A-Za-z-]+');
+                Route::put('/{slug}/update', 'update')->name('update')->where('slug', '[0-9A-Za-z-]+');
+                Route::delete('/{slug}/delete', 'delete')->name('delete')->where('slug', '[0-9A-Za-z-]+');
             });
 
         Route::controller(UserAgentController::class)->prefix('user-agents')->name('userAgents.')

@@ -59,5 +59,100 @@ class LocationController extends Controller
         ]);
     }
 
+    public function create(Request $slug)
+    {
+        $location = Location::where('slug', $slug)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
 
+        return view('admin.locations.create', [
+            'location' => $location
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name'=>'required|string|max:32',
+            // 'name_en'=>'required|string|max:32',
+            // 'name_ru'=>'required|string|max:32',
+            'slug'=>'required|string|max:32',
+            'sort_order'=>'required|string|max:5',
+        ]);
+
+        // location
+        $location = new Location();
+        $location->name = $request->name;
+        // $location->name_en = $request->name_en;
+        // $location->name_ru = $request->name_ru;
+        $location->slug = $request->slug;
+        $location->sort_order = $request->sort_order;
+        $location->save();
+
+
+        $success = trans('app.store-response', ['name' => $location->name]);
+        return redirect()->route('admin.locations.index', $location->slug)
+            ->with([
+                'success' => $success,
+            ]);
+    }
+
+    public function edit($slug)
+    {
+        $location = Location::where('slug', $slug)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->first();
+
+        return view('admin.locations.edit', [
+            'location' => $location
+        ]);
+    }
+
+    /**
+     * @param Request $request
+     * @param $slug
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function update(Request $request, $slug)
+    {
+        $location = Location::where('slug', $slug)
+            ->firstOrFail();
+        $request->validate([
+            'name'=>'required|string|max:32',
+            // 'name_en'=>'required|string|max:32',
+            // 'name_ru'=>'required|string|max:32',
+            'slug'=>'required|string|max:32',
+            'sort_order'=>'required|string|max:5',
+        ]);
+
+        // location
+        $location->name = $request->name;
+        // $location->name_en = $request->name_en;
+        // $location->name_ru = $request->name_ru;
+        $location->slug = $request->slug;
+        $location->sort_order = $request->sort_order;
+        $location->update();
+
+
+        $success = trans('app.store-response', ['name' => $location->name]);
+        return redirect()->route('admin.locations.index', $location->slug)
+            ->with([
+                'success' => $success,
+            ]);
+    }
+
+    public function delete($slug)
+    {
+        $location = Location::where('slug', $slug)
+            ->firstOrFail();
+        $success = trans('app.delete-response', ['name' => $location->name]);
+        $location->delete();
+
+        return redirect()->route('admin.locations.index')
+            ->with([
+                'success' => $success,
+            ]);
+    }
 }
